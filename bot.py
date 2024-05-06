@@ -152,7 +152,7 @@ def verifyPasswordCommandIntermediary(update: Update, context):
         update.message.reply_text('Введите корректный пароль')
         return
 
-    logging.info(f"Password job done. Password is {"strong" if password_difficulty else "weak"}")
+    logging.info(f"Password job done. Password is {'strong' if password_difficulty else 'weak'}")
     response = str()
     if password_difficulty:
         response = "Пароль сложный"
