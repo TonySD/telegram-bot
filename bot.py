@@ -33,19 +33,9 @@ def helpCommand(update: Update, context):
         response.append(f"/{command_name}: {description}")
     update.message.reply_text("\n".join(response))
 
-def findPhoneNumbersCommand(update: Update, context) -> str:
-    update.message.reply_text('Введите текст для поиска телефонных номеров: ')
-    logging.info(f"{update.effective_user.full_name} triggered find phones command")
+# Email section
 
-    return 'find_phone_number'
-
-def findEmailsCommand(update: Update, context) -> str:
-    update.message.reply_text('Введите текст для поиска адресов электронных почт: ')
-    logging.info(f"{update.effective_user.full_name} triggered find emails command")
-
-    return 'find_email'
-
-def find_emails_in_strings(strings: str | List[str]) -> List[str]:
+def findEmails(strings: str | List[str]) -> List[str]:
     result = list()
     emailRegex = re.compile(r"[\w\-+.]+@[\w\-+.]+\.[A-Za-z]+")
     if type(strings) == str:
@@ -59,8 +49,33 @@ def find_emails_in_strings(strings: str | List[str]) -> List[str]:
     logging.debug(f"Func: Email find\nGot: {strings}, \n\t\treturned: {result}")
     return result
 
+def findEmailsCommand(update: Update, context) -> str:
+    update.message.reply_text('Введите текст для поиска адресов электронных почт: ')
+    logging.info(f"{update.effective_user.full_name} triggered find emails command")
 
-def find_phone_numbers(strings: str | List[str]) -> List[str]:
+    return 'find_email'
+
+def findEmailsCommandIntermediary(update: Update, context):
+    text = update.message.text
+    logging.debug(f"Got {update.message.chat_id} text for email find")
+    found_emails = findEmails(text)
+    logging.info(f"Email job done. Found {len(found_emails)} emails")
+
+    if not found_emails: 
+        update.message.reply_text('Электронные почты не найдены')
+        return ConversationHandler.END
+    
+    response = list()
+    response.append(f"Найдены {len(found_emails)} адресов:")
+    for i, email in enumerate(found_emails):
+        response.append(f"{i}: {email}")
+    logging.debug(f"Created response for emails: {response}")
+    update.message.reply_text("\n".join(response))
+    return ConversationHandler.END
+
+# Phone section
+
+def findPhoneNumbers(strings: str | List[str]) -> List[str]:
     result = list()
     phoneRegex = re.compile(r"(\+7|8)[ \-]?\(?(\d{3})\)?[ \-]?(\d{3})[ \-]?(\d{2})[ \-]?(\d{2})")
     if type(strings) == str:
@@ -76,28 +91,16 @@ def find_phone_numbers(strings: str | List[str]) -> List[str]:
     logging.debug(f"Func: Phone find\nGot: {strings}, \nreturned: {result}")
     return result
 
-def findEmailsCommandIntermediary(update: Update, context) -> str:
-    text = update.message.text
-    logging.debug(f"Got {update.message.chat_id} text for email find")
-    found_emails = find_emails_in_strings(text)
-    logging.info(f"Email job done. Found {len(found_emails)} emails")
+def findPhoneNumbersCommand(update: Update, context) -> str:
+    update.message.reply_text('Введите текст для поиска телефонных номеров: ')
+    logging.info(f"{update.effective_user.full_name} triggered find phones command")
 
-    if not found_emails: 
-        update.message.reply_text('Электронные почты не найдены')
-        return ConversationHandler.END
+    return 'find_phone_number'
     
-    response = list()
-    response.append(f"Найдены {len(found_emails)} адресов:")
-    for i, email in enumerate(found_emails):
-        response.append(f"{i}: {email}")
-    logging.debug(f"Created response for emails: {response}")
-    update.message.reply_text("\n".join(response))
-    return ConversationHandler.END
-    
-def findPhoneNumbersCommandIntermediary(update: Update, context) -> str:
+def findPhoneNumbersCommandIntermediary(update: Update, context):
     text = update.message.text
     logging.debug(f"Got {update.message.chat_id} text for phones")
-    found_phones = find_phone_numbers(text)
+    found_phones = findPhoneNumbers(text)
     logging.info(f"Phone job done. Found {len(found_phones)} phones")
 
     if not found_phones: 
@@ -111,7 +114,33 @@ def findPhoneNumbersCommandIntermediary(update: Update, context) -> str:
     logging.debug(f"Created response for phones: {response}")
     update.message.reply_text("\n".join(response))
     return ConversationHandler.END
+
+# Password section
+
+def verifyPassword(string: str) -> bool | None:
+    passwordRegex = re.compile("[^\s]+")
+    password = passwordRegex.search(string).group()
+    if not password:
+        logging.debug(f"Received blank string: [{string}]")
+        return None
+    lengthRegex = re.compile("[^\s]{8,}")
+    uppercaseRegex = re.compile("[A-Z]")
+    lowercaseRegex = re.compile("[a-z]")
+    digitsRegex = re.compile("\d")
+    specialSymbolsRegex = re.compile("[!@#$%^&*()]")
+
+    if lengthRegex.search(password) and uppercaseRegex.search(password) and lowercaseRegex.search(password) and digitsRegex.search(password) and specialSymbolsRegex.search(password):
+        logging.debug(f"Password {password} is strong")
+        return True
     
+    logging.debug(f"Password {password} is weak")
+    return False
+
+def verifyPasswordCommand():
+    ...
+
+def verifyPasswordCommandIntermediary():
+    ...
 
 def main():
     updater = Updater(TOKEN, use_context=True)
