@@ -13,7 +13,8 @@ if not (Path(WORKING_DIRECTORY) / "logs").is_dir():                 # If logs di
 NUMBER_OF_LOGS = len(os.listdir(Path(WORKING_DIRECTORY) / "logs/")) # To have various log files for launches
 COMMAND_DESCRIPTIONS = (
     ("find_phone_number", "Команда для поиска телефонных номеров"),
-    ("find_email", "Команда для поиска электронных почт")
+    ("find_email", "Команда для поиска электронных почт"),
+    ("verify_password", "Команда для определения сложности пароля")
 )
 
 
@@ -136,11 +137,30 @@ def verifyPassword(string: str) -> bool | None:
     logging.debug(f"Password {password} is weak")
     return False
 
-def verifyPasswordCommand():
-    ...
+def verifyPasswordCommand(update: Update, context):
+    update.message.reply_text('Введите ваш пароль для проверки: ')
+    logging.info(f"{update.effective_user.full_name} triggered verify password command")
 
-def verifyPasswordCommandIntermediary():
-    ...
+    return 'verify_password'
+
+def verifyPasswordCommandIntermediary(update: Update, context):
+    text = update.message.text
+    logging.debug(f"Got {update.message.chat_id} text for verifying password")
+    password_difficulty = verifyPassword(text)
+
+    if password_difficulty is None: 
+        update.message.reply_text('Введите корректный пароль')
+        return
+
+    logging.info(f"Password job done. Password is {"strong" if password_difficulty else "weak"}")
+    response = str()
+    if password_difficulty:
+        response = "Пароль сложный"
+    else:
+        response = "Пароль простой"
+
+    update.message.reply_text(response)
+    return ConversationHandler.END
 
 def main():
     updater = Updater(TOKEN, use_context=True)
@@ -165,8 +185,17 @@ def main():
         fallbacks=[]
     )
 
+    convHandlerVerifyPassword = ConversationHandler(
+        entry_points=[CommandHandler('verify_password', verifyPasswordCommand)],
+        states={
+            'verify_password': [MessageHandler(Filters.text & ~Filters.command, verifyPasswordCommandIntermediary)],
+        },
+        fallbacks=[]
+    )
+
     dp.add_handler(convHandlerFindPhoneNumbers)
     dp.add_handler(convHandlerFindEmails)
+    dp.add_handler(convHandlerVerifyPassword)
 		
     updater.start_polling()
     updater.idle()
