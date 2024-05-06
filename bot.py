@@ -19,14 +19,19 @@ logging.basicConfig(level=logging.DEBUG,
                     format=' %(asctime)s - %(levelname)s - %(message)s'
 )
 
+def start(update: Update, context):
+    user = update.effective_user
+    update.message.reply_text(f'Привет {user.full_name}!')
+
 def findPhoneNumbersCommand(update: Update, context) -> str:
     update.message.reply_text('Введите текст для поиска телефонных номеров: ')
+    logging.info(f"{update.effective_user.full_name} triggered find phones command")
 
     return 'find_phone_numbers'
 
 def findEmailsCommand(update: Update, context) -> str:
     update.message.reply_text('Введите текст для поиска адресов электронных почт: ')
-    logging.info(f"{update.message.chat_id} triggered find emails command")
+    logging.info(f"{update.effective_user.full_name} triggered find emails command")
 
     return 'find_emails'
 
