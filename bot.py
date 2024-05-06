@@ -11,7 +11,10 @@ WORKING_DIRECTORY = os.path.dirname(os.path.abspath(__file__))      # I work fro
 if not (Path(WORKING_DIRECTORY) / "logs").is_dir():                 # If logs dir not exists, create it
     os.makedirs(Path(WORKING_DIRECTORY) / "logs")
 NUMBER_OF_LOGS = len(os.listdir(Path(WORKING_DIRECTORY) / "logs/")) # To have various log files for launches
-
+COMMAND_DESCRIPTIONS = (
+    ("find_phone_number", "Команда для поиска телефонных номеров"),
+    ("find_email", "Команда для поиска электронных почт")
+)
 
 
 logging.basicConfig(level=logging.DEBUG, 
@@ -21,7 +24,14 @@ logging.basicConfig(level=logging.DEBUG,
 
 def start(update: Update, context):
     user = update.effective_user
-    update.message.reply_text(f'Привет {user.full_name}!')
+    update.message.reply_text(f'Привет {user.full_name}!\nВведи /help, чтобы узнать, что я умею!')
+
+def helpCommand(update: Update, context):
+    response = list()
+    response.append("Вот список комманд, которые я могу выполнить:")
+    for command_name, description in COMMAND_DESCRIPTIONS:
+        response.append(f"/{command_name}: {description}")
+    update.message.reply_text(response)
 
 def findPhoneNumbersCommand(update: Update, context) -> str:
     update.message.reply_text('Введите текст для поиска телефонных номеров: ')
@@ -105,7 +115,7 @@ def main():
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
-    
+
 
 
 if __name__ == "__main__":
