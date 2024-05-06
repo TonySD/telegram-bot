@@ -1,4 +1,4 @@
-import logging, os, re
+import logging, os, re, paramiko
 from typing import List
 from telegram import Update, ForceReply
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
@@ -14,7 +14,20 @@ NUMBER_OF_LOGS = len(os.listdir(Path(WORKING_DIRECTORY) / "logs/")) # To have va
 COMMAND_DESCRIPTIONS = (
     ("find_phone_number", "Команда для поиска телефонных номеров"),
     ("find_email", "Команда для поиска электронных почт"),
-    ("verify_password", "Команда для определения сложности пароля")
+    ("verify_password", "Команда для определения сложности пароля"),
+    ("get_release", "Получить информацию о релизе"),
+    ("get_uname", "Получить информацию об архитектуре процессора, имени хоста системы и версии ядра"),
+    ("get_uptime", "Получить время работы"),
+    ("get_df", "Получение информации о состоянии файловой системы"),
+    ("get_free", "Получение информации о состоянии оперативной памяти"),
+    ("get_mpstat", "Получение информации о производительности системы"),
+    ("get_w", "Получение информации о работающих в данной системе пользователях"),
+    ("get_auths", "Получение информации о последних 10 входов в систему"),
+    ("get_critical", "Получение информации о последних 5 критических событиях"),
+    ("get_ps", "Получение информации о запущенных процессах"),
+    ("get_ss", "Получение информации об используемых портах"),
+    ("get_apt_list", "Получение информации об установленных пакетах"),
+    ("get_services", "Получение информации о запущенных сервисах")
 )
 
 
@@ -161,6 +174,30 @@ def verifyPasswordCommandIntermediary(update: Update, context):
 
     update.message.reply_text(response)
     return ConversationHandler.END
+
+# Monitoring
+
+def executeCommand(command: str) -> str | None:
+    if not command:
+        logging.error(f"Func executeCommand got blank command: {command}")
+        return
+
+    host = os.getenv('HOST')
+    port = os.getenv('PORT')
+    username = os.getenv('USERNAME')
+    password = os.getenv('PASSWORD')
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(hostname=host, username=username, password=password, port=port)
+    stdin, stdout, stderr = client.exec_command(command)
+    data = stdout.read() + stderr.read()
+    stdin.close()
+    client.close()
+    data = str(data).replace('\\n', '\n').replace('\\t', '\t')[2:-1]
+
+    logging.debug(f"Executed {command}. Result: {data}")
+    return data
 
 def main():
     updater = Updater(TOKEN, use_context=True)
