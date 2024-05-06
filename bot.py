@@ -84,7 +84,7 @@ def findEmailsCommandIntermediary(update: Update, context) -> str:
 
     if not found_emails: 
         update.message.reply_text('Электронные почты не найдены')
-        return
+        return ConversationHandler.END
     
     response = list()
     response.append(f"Найдены {len(found_emails)} адресов:")
@@ -92,6 +92,7 @@ def findEmailsCommandIntermediary(update: Update, context) -> str:
         response.append(f"{i}: {email}")
     logging.debug(f"Created response for emails: {response}")
     update.message.reply_text("\n".join(response))
+    return ConversationHandler.END
     
 def findPhoneNumbersCommandIntermediary(update: Update, context) -> str:
     text = update.message.text
@@ -101,7 +102,7 @@ def findPhoneNumbersCommandIntermediary(update: Update, context) -> str:
 
     if not found_phones: 
         update.message.reply_text('Телефонные номера не найдены')
-        return
+        return ConversationHandler.END
     
     response = list()
     response.append(f"Найдены {len(found_phones)} номеров:")
@@ -109,12 +110,37 @@ def findPhoneNumbersCommandIntermediary(update: Update, context) -> str:
         response.append(f"{i}: {phone}")
     logging.debug(f"Created response for phones: {response}")
     update.message.reply_text("\n".join(response))
+    return ConversationHandler.END
     
 
 def main():
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("help", helpCommand))
+
+    convHandlerFindPhoneNumbers = ConversationHandler(
+        entry_points=[CommandHandler('find_phone_number', findPhoneNumbersCommand)],
+        states={
+            'find_phone_number': [MessageHandler(Filters.text & ~Filters.command, findPhoneNumbersCommandIntermediary)],
+        },
+        fallbacks=[]
+    )
+
+    convHandlerFindEmails = ConversationHandler(
+        entry_points=[CommandHandler('find_email', findEmailsCommand)],
+        states={
+            'find_email': [MessageHandler(Filters.text & ~Filters.command, findEmailsCommandIntermediary)],
+        },
+        fallbacks=[]
+    )
+
+    dp.add_handler(convHandlerFindPhoneNumbers)
+    dp.add_handler(convHandlerFindEmails)
+		
+    updater.start_polling()
+    updater.idle()
 
 
 
