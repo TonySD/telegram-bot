@@ -45,8 +45,22 @@ def find_emails_in_strings(strings: str | List[str]) -> List[str]:
     return result
 
 
-def find_phone_numbers():
-    ...
+def find_phone_numbers(strings: str | List[str]):
+    result = list()
+    phoneRegex = re.compile(r"(\+7|8)[ \-]?\(?(\d{3})\)?[ \-]?(\d{3})[ \-]?(\d{2})[ \-]?(\d{2})")
+    if type(strings) == str:
+        strings = [strings]
+
+    for string in strings:
+        result.extend(
+            map(''.join,
+                phoneRegex.findall(string)
+            )
+        )
+
+    logging.debug(f"Func: Phone find\nGot: {strings}, \nreturned: {result}")
+    return result
+    
 
 def main():
     updater = Updater(TOKEN, use_context=True)
