@@ -26,7 +26,7 @@ COMMAND_DESCRIPTIONS = (
     ("get_critical", "Получение информации о последних 5 критических событиях"),
     ("get_ps", "Получение информации о запущенных процессах"),
     ("get_ss", "Получение информации об используемых портах"),
-    ("get_apt_list", "Получение информации об установленных пакетах"),
+    ("get_apt_list", "Получение информации об установленных пакетах. Присутствуют 2 режима: вывод всех пакетов и поиск информации о конкретном"),
     ("get_services", "Получение информации о запущенных сервисах")
 )
 
@@ -199,6 +199,92 @@ def executeCommand(command: str) -> str | None:
     logging.debug(f"Executed {command}. Result: {data}")
     return data
 
+def sendPackets(data: str, update: Update):
+    data = data.split('\n')
+    for i in range(0, len(data), 20):
+        update.message.reply_text("\n".join(data[i : i + 20]))
+
+def getRelease(update: Update, context):
+    data = executeCommand("cat /etc/*-release")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getUname(update: Update, context):
+    data = executeCommand("uname -a")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getUptime(update: Update, context):
+    data = executeCommand("uptime")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getDF(update: Update, context):
+    data = executeCommand("df -h")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getFree(update: Update, context):
+    data = executeCommand("free -h")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getMpstat(update: Update, context):
+    data = executeCommand("mpstat")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getW(update: Update, context):
+    data = executeCommand("uptime")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getAuths(update: Update, context):
+    data = executeCommand("last | head")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getCritical(update: Update, context):
+    data = executeCommand("journalctl -r -p crit -n 5")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getPs(update: Update, context):
+    data = executeCommand("ps")
+    update.message.reply_text(f"Вот информация: \n{data}")
+
+def getSs(update: Update, context):
+    data = executeCommand("ss")
+    update.message.reply_text(f"Вот информация: \n")
+    sendPackets(data, update)
+
+def getAllAptList(update: Update) -> str:
+    data = executeCommand("apt list | head -n 200")
+    sendPackets(data, update)
+
+def getSpecificAptInfo(update: Update, context):
+    packet = update.message.text
+    logging.info(f"Requested info about {packet.strip()}")
+    data = executeCommand(f"apt info {packet.strip()}")
+    update.message.reply_text(f"Информация о пакете {packet}:")
+    sendPackets(data, update)
+    return ConversationHandler.END
+
+def getAptListCommand(update: Update, context):
+    update.message.reply_text(f"Данная комманда поддерживает два режима.\n1. Вывод всех пакетов.\n2. Поиск информации о введенном пакете.\nВведите номер режима, который вас интересует")
+    return 'enter_mode_number'
+
+def enterAptMode(update: Update, context):
+    if update.message.text.strip() not in ('1', '2'):
+        logging.info(f"{update.effective_user.full_name} entered not valid mode: {update.message.text}")
+        update.message.reply_text(f"Пожалуйста, выберите режим, отправив 1 или 2")
+
+    logging.debug(f"Chosed {update.message.text.strip()} mode")
+    if update.message.text.strip() == '1':
+        update.message.reply_text(f"Вы выбрали режим вывода всех пакетов")
+        getAllAptList(update)
+        return ConversationHandler.END
+
+    update.message.reply_text(f"Вы выбрали режим вывода информации о конкретном пакете")
+    update.message.reply_text(f"Введите имя пакета, о котором вы хотите узнать")
+    return "get_specific_apt_info"
+
+def getServices(update: Update, context):
+    data = executeCommand("systemctl list-units --type=service | cat")
+    update.message.reply_text(f"Вот информация: \n")
+    sendPackets(data, update)
+
 def main():
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
@@ -230,9 +316,32 @@ def main():
         fallbacks=[]
     )
 
+    convHandlerAptList = ConversationHandler(
+        entry_points=[CommandHandler('get_apt_list', getAptListCommand)],
+        states={
+            'enter_mode_number': [MessageHandler(Filters.text & ~Filters.command, enterAptMode)],
+            'get_specific_apt_info': [MessageHandler(Filters.text & ~Filters.command, getSpecificAptInfo)],
+        },
+        fallbacks=[]
+    )
+
     dp.add_handler(convHandlerFindPhoneNumbers)
     dp.add_handler(convHandlerFindEmails)
     dp.add_handler(convHandlerVerifyPassword)
+    dp.add_handler(convHandlerAptList)
+
+    dp.add_handler(CommandHandler("get_release", getRelease))
+    dp.add_handler(CommandHandler("get_uname", getUname))
+    dp.add_handler(CommandHandler("get_uptime", getUptime))
+    dp.add_handler(CommandHandler("get_df", getDF))
+    dp.add_handler(CommandHandler("get_free", getFree))
+    dp.add_handler(CommandHandler("get_mpstat", getMpstat))
+    dp.add_handler(CommandHandler("get_w", getW))
+    dp.add_handler(CommandHandler("get_auths", getAuths))
+    dp.add_handler(CommandHandler("get_critical", getCritical))
+    dp.add_handler(CommandHandler("get_ps", getPs))
+    dp.add_handler(CommandHandler("get_ss", getSs))
+    dp.add_handler(CommandHandler("get_services", getServices))
 		
     updater.start_polling()
     updater.idle()
