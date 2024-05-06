@@ -31,19 +31,19 @@ def helpCommand(update: Update, context):
     response.append("Вот список комманд, которые я могу выполнить:")
     for command_name, description in COMMAND_DESCRIPTIONS:
         response.append(f"/{command_name}: {description}")
-    update.message.reply_text(response)
+    update.message.reply_text("\n".join(response))
 
 def findPhoneNumbersCommand(update: Update, context) -> str:
     update.message.reply_text('Введите текст для поиска телефонных номеров: ')
     logging.info(f"{update.effective_user.full_name} triggered find phones command")
 
-    return 'find_phone_numbers'
+    return 'find_phone_number'
 
 def findEmailsCommand(update: Update, context) -> str:
     update.message.reply_text('Введите текст для поиска адресов электронных почт: ')
     logging.info(f"{update.effective_user.full_name} triggered find emails command")
 
-    return 'find_emails'
+    return 'find_email'
 
 def find_emails_in_strings(strings: str | List[str]) -> List[str]:
     result = list()
@@ -56,7 +56,7 @@ def find_emails_in_strings(strings: str | List[str]) -> List[str]:
             emailRegex.findall(string)
         )
 
-    logging.debug(f"Func: Email find: {strings}, \n\t\treturned: {result}")
+    logging.debug(f"Func: Email find\nGot: {strings}, \n\t\treturned: {result}")
     return result
 
 
