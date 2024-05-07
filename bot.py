@@ -254,7 +254,12 @@ def getAllAptList(update: Update) -> str:
     sendPackets(data, update)
 
 def getSpecificAptInfo(update: Update, context):
-    packet = update.message.text
+    text = update.message.text
+    packetRegex = re.compile(r"[A-Za-z0-9.-]+")
+    packet = packetRegex.search(text).group()
+    if not packet:
+        update.message.reply_text(f"Введите корректное имя пакета")
+        return    
     logging.info(f"Requested info about {packet.strip()}")
     data = executeCommand(f"apt info {packet.strip()}")
     update.message.reply_text(f"Информация о пакете {packet}:")
