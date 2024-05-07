@@ -27,7 +27,8 @@ COMMAND_DESCRIPTIONS = (
     ("get_ps", "Получение информации о запущенных процессах"),
     ("get_ss", "Получение информации об используемых портах"),
     ("get_apt_list", "Получение информации об установленных пакетах. Присутствуют 2 режима: вывод всех пакетов и поиск информации о конкретном"),
-    ("get_services", "Получение информации о запущенных сервисах")
+    ("get_services", "Получение информации о запущенных сервисах"),
+    ("get_repl_logs", "Получение логов о репликации")
 )
 
 
@@ -290,6 +291,10 @@ def getServices(update: Update, context):
     update.message.reply_text(f"Вот информация: \n")
     sendPackets(data, update)
 
+def getReplLogs(update: Update, context):
+    data = executeCommand("cat /var/log/postgresql/postgresql-15-main.log | grep -i 'repl_user' | head -n 20") 
+    update.message.reply_text(f"Вот информация: {data}\n")
+
 def main():
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
@@ -347,6 +352,7 @@ def main():
     dp.add_handler(CommandHandler("get_ps", getPs))
     dp.add_handler(CommandHandler("get_ss", getSs))
     dp.add_handler(CommandHandler("get_services", getServices))
+    dp.add_handler(CommandHandler("get_repl_logs", getReplLogs))
 		
     updater.start_polling()
     updater.idle()
