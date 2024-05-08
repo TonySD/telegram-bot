@@ -13,6 +13,7 @@ class DB:
         self.host = os.getenv("DB_HOST")
         self.port = os.getenv("DB_PORT")
         self.database = os.getenv("DB_DATABASE")
+        self.chat_buffer = dict()
 
     def open_connection(self):
         logging.debug("Connection to DB had been opened")

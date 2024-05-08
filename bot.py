@@ -55,7 +55,26 @@ def findEmailsCommandIntermediary(update: Update, context):
         response.append(f"{i}: {email}")
     logging.debug(f"Created response for emails: {response}")
     update.message.reply_text("\n".join(response))
+
+    chat_id = update.message.chat_id
+    my_db.store_in_buffer(chat_id, found_emails)
+    update.message.reply_text("Могу ли я сохранить данные электронные почты в базу данных?\n(да/нет)")
+
+    return "find_emails_save_db"
+
+def findEmailsSaveDB(update: Update, context):
+    text = update.message.text
+    chat_id = update.message.chat_id
+    logging.debug(f"Response is {text}")
+    if text.strip().lower() == "да":
+        my_db.save_in_db(chat_id, mode=1)
+    elif text.strip().lower() == "нет":
+        my_db.delete_from_buffer(chat_id)
+    else:
+        update.message.reply_text("Пожалуйста, ответьте на предыдущий вопрос в данном формате: (да/нет)")
+        return
     return ConversationHandler.END
+    
 
 # Phone section
 
@@ -283,6 +302,7 @@ def main():
         entry_points=[CommandHandler('find_email', findEmailsCommand)],
         states={
             'find_email': [MessageHandler(Filters.text & ~Filters.command, findEmailsCommandIntermediary)],
+            'find_emails_save_db': [MessageHandler(Filters.text & ~Filters.command, findEmailsSaveDB)],
         },
         fallbacks=[]
     )
