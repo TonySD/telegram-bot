@@ -18,6 +18,7 @@ class DB:
                                 port=self.port, 
                                 database=self.database)
 
+    # Use only internally
     def execute_command_commit(self, command: str):
         connection = None
         try:
@@ -34,6 +35,7 @@ class DB:
                 connection.close()
                 logging.debug("Connection with PostgreSQL is closed")
 
+    # Use only internally
     def execute_command_fetch(self, command: str):
         connection = None
         result = list()
@@ -53,16 +55,18 @@ class DB:
                 logging.debug("Connection with PostgreSQL is closed")
         return result
 
-    def select_emails():
-        ...
+    def select_emails(self):
+        return self.execute_command_fetch("SELECT * FROM emails;")
 
-    def select_phones():
-        ...
+    def select_phones(self):
+        return self.execute_command_fetch("SELECT * FROM phone_numbers;")
 
-    def insert_phones():
-        ...
+    def insert_phones(self, phone_numbers):
+        statement = "INSERT INTO phone_numbers (id, phone) VALUES %s;" % str(phone_numbers)[1:-1]
+        self.execute_command_commit(statement)
 
-    def insert_emails():
-        ...
+    def insert_emails(self, emails):
+        statement = "INSERT INTO emails (id, email) VALUES %s;" % str(emails)[1:-1]
+        self.execute_command_commit(statement)
 
 my_db = DB()
