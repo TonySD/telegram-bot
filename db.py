@@ -1,8 +1,12 @@
 import psycopg2
 import os, logging
 import config
+from typing import Dict
 
 class DB:
+    # Needed for temporary saving before saving in DB
+    chat_buffer: Dict[int, str]
+
     def __init__(self):
         self.username = os.getenv("DB_USER")
         self.password = os.getenv("DB_PASSWORD")
@@ -70,5 +74,33 @@ class DB:
         emails = ", ".join([f"('{email}')" for email in emails])
         statement = "INSERT INTO emails (email) VALUES %s;" % emails
         self.execute_command_commit(statement)
+
+    def store_in_buffer(self, chat_id: int, values: list):
+        self.chat_buffer[chat_id] = values
+        logging.debug(f"Added values {values} in buffer")
+
+    # Mode 0 - phones, 1 - emails
+    def save_in_db(self, chat_id: int, mode: int):
+        if chat_id not in self.chat_buffer:
+            logging.error(f"Chat_id {chat_id} not in buffer, but tried to send values")
+            return
+        
+        values = self.chat_buffer.pop(chat_id)
+        logging.debug(f"Extracted values {values} from buffer")
+        if mode == 0:
+            self.insert_phones(values)
+            logging.info(f"Phones {values} sended to DB")
+        if mode == 1:
+            self.insert_emails(values)
+            logging.info(f"Emails {values} sended to DB")
+        
+
+    def delete_from_buffer(self, chat_id):
+        if chat_id not in self.chat_buffer:
+            logging.error(f"Chat_id {chat_id} not in buffer, but tried to clear")
+            return
+        
+        values = self.chat_buffer.pop(chat_id)
+        logging.debug(f"Extracted values {values} from buffer")
 
 my_db = DB()
