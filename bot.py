@@ -116,6 +116,24 @@ def findPhoneNumbersCommandIntermediary(update: Update, context):
         response.append(f"{i}: {phone}")
     logging.debug(f"Created response for phones: {response}")
     update.message.reply_text("\n".join(response))
+
+    chat_id = update.message.chat_id
+    my_db.store_in_buffer(chat_id, found_phones)
+    update.message.reply_text("Могу ли я сохранить данные телефонные номера в базу данных?\n(да/нет)")
+
+    return "find_phones_save_db"
+
+def findPhonesSaveDB(update: Update, context):
+    text = update.message.text
+    chat_id = update.message.chat_id
+    logging.debug(f"Response is {text}")
+    if text.strip().lower() == "да":
+        my_db.save_in_db(chat_id, mode=0)
+    elif text.strip().lower() == "нет":
+        my_db.delete_from_buffer(chat_id)
+    else:
+        update.message.reply_text("Пожалуйста, ответьте на предыдущий вопрос в данном формате: (да/нет)")
+        return
     return ConversationHandler.END
 
 # Password section
@@ -294,6 +312,7 @@ def main():
         entry_points=[CommandHandler('find_phone_number', findPhoneNumbersCommand)],
         states={
             'find_phone_number': [MessageHandler(Filters.text & ~Filters.command, findPhoneNumbersCommandIntermediary)],
+            'find_phones_save_db': [MessageHandler(Filters.text & ~Filters.command, findPhonesSaveDB)], 
         },
         fallbacks=[]
     )
