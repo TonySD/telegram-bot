@@ -62,11 +62,13 @@ class DB:
         return self.execute_command_fetch("SELECT * FROM phone_numbers;")
 
     def insert_phones(self, phone_numbers):
-        statement = "INSERT INTO phone_numbers (id, phone) VALUES %s;" % str(phone_numbers)[1:-1]
+        phones = ", ".join([f"('{phone}')" for phone in phone_numbers])
+        statement = "INSERT INTO phone_numbers (phone) VALUES %s;" % phones
         self.execute_command_commit(statement)
 
     def insert_emails(self, emails):
-        statement = "INSERT INTO emails (id, email) VALUES %s;" % str(emails)[1:-1]
+        emails = ", ".join([f"('{email}')" for email in emails])
+        statement = "INSERT INTO emails (email) VALUES %s;" % emails
         self.execute_command_commit(statement)
 
 my_db = DB()
