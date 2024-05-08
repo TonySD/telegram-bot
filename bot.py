@@ -68,13 +68,20 @@ def findEmailsSaveDB(update: Update, context):
     logging.debug(f"Response is {text}")
     if text.strip().lower() == "да":
         my_db.save_in_db(chat_id, mode=1)
+        update.message.reply_text("Электронные почты успешно сохранены!")
     elif text.strip().lower() == "нет":
         my_db.delete_from_buffer(chat_id)
+        update.message.reply_text("Электронные почты не будут сохранены")
     else:
         update.message.reply_text("Пожалуйста, ответьте на предыдущий вопрос в данном формате: (да/нет)")
         return
     return ConversationHandler.END
-    
+
+def getEmails(update: Update, context):
+    update.message.reply_text("Таблица emails:")
+    emails = my_db.select_emails()
+    emails = [f"{id}: {email}" for id, email in emails]
+    sendPackets("\n".join(emails), update)
 
 # Phone section
 
@@ -129,12 +136,20 @@ def findPhonesSaveDB(update: Update, context):
     logging.debug(f"Response is {text}")
     if text.strip().lower() == "да":
         my_db.save_in_db(chat_id, mode=0)
+        update.message.reply_text("Номера телефонов успешно сохранены!")
     elif text.strip().lower() == "нет":
         my_db.delete_from_buffer(chat_id)
+        update.message.reply_text("Номера телефонов не будут сохранены")
     else:
         update.message.reply_text("Пожалуйста, ответьте на предыдущий вопрос в данном формате: (да/нет)")
         return
     return ConversationHandler.END
+
+def getPhones(update: Update, context):
+    update.message.reply_text("Таблица phone_numbers:")
+    phones = my_db.select_phones()
+    phones = [f"{id}: {phone}" for id, phone in phones]
+    sendPackets("\n".join(phones), update)
 
 # Password section
 
@@ -361,6 +376,9 @@ def main():
     dp.add_handler(CommandHandler("get_ss", getSs))
     dp.add_handler(CommandHandler("get_services", getServices))
     dp.add_handler(CommandHandler("get_repl_logs", getReplLogs))
+
+    dp.add_handler(CommandHandler("get_emails", getEmails))
+    dp.add_handler(CommandHandler("get_phone_numbers", getPhones))
 		
     updater.start_polling()
     updater.idle()
