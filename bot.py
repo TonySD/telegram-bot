@@ -251,7 +251,7 @@ def getMpstat(update: Update, context):
     update.message.reply_text(f"Вот информация: \n{data}")
 
 def getW(update: Update, context):
-    data = executeCommand("uptime")
+    data = executeCommand("w")
     update.message.reply_text(f"Вот информация: \n{data}")
 
 def getAuths(update: Update, context):
