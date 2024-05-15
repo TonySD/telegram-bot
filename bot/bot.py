@@ -154,16 +154,16 @@ def getPhones(update: Update, context):
 # Password section
 
 def verifyPassword(string: str) -> bool | None:
-    passwordRegex = re.compile("[^\s]+")
+    passwordRegex = re.compile(r"[^\s]+")
     password = passwordRegex.search(string).group()
     if not password:
         logging.debug(f"Received blank string: [{string}]")
         return None
-    lengthRegex = re.compile("[^\s]{8,}")
-    uppercaseRegex = re.compile("[A-Z]")
-    lowercaseRegex = re.compile("[a-z]")
-    digitsRegex = re.compile("\d")
-    specialSymbolsRegex = re.compile("[!@#$%^&*()]")
+    lengthRegex = re.compile(r"[^\s]{8,}")
+    uppercaseRegex = re.compile(r"[A-Z]")
+    lowercaseRegex = re.compile(r"[a-z]")
+    digitsRegex = re.compile(r"\d")
+    specialSymbolsRegex = re.compile(r"[!@#$%^&*()]")
 
     if lengthRegex.search(password) and uppercaseRegex.search(password) and lowercaseRegex.search(password) and digitsRegex.search(password) and specialSymbolsRegex.search(password):
         logging.debug(f"Password {password} is strong")
@@ -204,10 +204,10 @@ def executeCommand(command: str) -> str | None:
         logging.error(f"Func executeCommand got blank command: {command}")
         return
 
-    host = os.getenv('HOST')
-    port = os.getenv('PORT')
-    username = os.getenv('USERNAME')
-    password = os.getenv('PASSWORD')
+    host = os.getenv('RM_HOST')
+    port = os.getenv('RM_PORT')
+    username = os.getenv('RM_USERNAME')
+    password = os.getenv('RM_PASSWORD')
 
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -313,7 +313,7 @@ def getServices(update: Update, context):
     sendPackets(data, update)
 
 def getReplLogs(update: Update, context):
-    data = executeCommand("cat /var/log/postgresql/postgresql-15-main.log | grep -i 'repl_user' | head -n 20") 
+    data = executeCommand("cat /var/log/postgresql/* | grep -i 'repl' | head -n 20") 
     update.message.reply_text(f"Вот информация: {data}\n")
 
 def main():
