@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  bot:
+    image: bot_image
+    depends_on:
+      - db
+      - db_repl
+    networks:
+      - custom_network
+
+  db:
+    healthcheck:
+      test: 'pg_isready -U postgres -d bot_db'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+      - 2222:22
+    image: db_image
+    networks:
+      - custom_network
+
+  db_repl:
+    healthcheck:
+      test: 'pg_isready -U postgres -d bot_db'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    ports:
+      - 5433:5432
+    image: db_repl_image
+    depends_on:
+      - db
+    networks:
+      - custom_network
+
+networks:
+  custom_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/24
