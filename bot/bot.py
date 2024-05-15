@@ -21,7 +21,7 @@ def helpCommand(update: Update, context):
 
 def findEmails(strings: str | List[str]) -> List[str]:
     result = list()
-    emailRegex = re.compile(r"[\w\-+.]+@[\w\-+.]+\.[A-Za-z]+")
+    emailRegex = re.compile(r"[\w\-+.]+@[\w\-+.]+\.[A-Za-z]{2,}")
     if type(strings) == str:
         strings = [strings]
 
