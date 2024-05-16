@@ -1,5 +1,0 @@
-paramiko==3.4.0
-urllib3==1.26.5
-psycopg2_binary==2.9.9
-python-dotenv==1.0.1
-python-telegram-bot==13.7
