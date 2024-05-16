@@ -1,0 +1,3 @@
+bot_host ansible_host=192.168.0.66 ansible_user=ansible ansible_password=ansible
+db_host ansible_host=192.168.0.64 ansible_user=ansible ansible_password=ansible 
+db_repl_host ansible_host=192.168.0.65 ansible_user=ansible ansible_password=ansible

@@ -1,0 +1,203 @@
+- name: Postgresql primary DB install
+  hosts: db_host
+  become: yes
+  tasks:
+    - name: Install packages
+      apt:
+        name:
+          - postgresql 
+          - postgresql-contrib
+          - python3-psycopg2
+          - ssh
+        state: latest
+
+    - name: Move init SQL script
+      copy:
+        src: "./00_init.sql"
+        dest: "~/00_init.sql"
+
+    - name: Change remote user password
+      shell: echo "{{ RM_USER }}:{{ RM_PASSWORD }}" | chpasswd
+
+    - name: Configure SSH
+      shell: echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+
+    - name: Start SSH service
+      service:
+        name: ssh
+        state: restarted
+
+    - name: Start postgresql service
+      service:
+        name: postgresql
+        state: started
+    
+    - name: Initialize DB
+      become_user: postgres
+      postgresql_db:
+        name: "{{ DB_DATABASE }}"
+        encoding: 'UTF-8'
+
+    - name: Change default password
+      become_user: postgres
+      postgresql_user:
+        name: postgres
+        password: "{{ DB_PASSWORD }}"
+        db: "{{ DB_DATABASE }}"
+    
+    - name: Reconfigure pg_hba for remote access
+      become_user: postgres
+      postgresql_pg_hba:
+        dest: /etc/postgresql/14/main/pg_hba.conf
+        contype: "host"
+        databases: "all"
+        users: "all"
+        source: "192.168.0.0/16"
+        method: "trust"
+        create: true
+
+    - name: Reconfigure pg_hba for replication
+      become_user: postgres
+      postgresql_pg_hba:
+        dest: /etc/postgresql/14/main/pg_hba.conf
+        contype: "host"
+        databases: "replication"
+        users: "{{ DB_REPL_USER }}"
+        source: "192.168.0.0/16"
+        method: "trust"
+        create: true
+        
+    - name: Set listen_adresses
+      become_user: postgres
+      postgresql_set:
+        name: listen_addresses
+        value: '*'
+    
+    - name: Set archive_mode
+      become_user: postgres
+      postgresql_set:
+        name: archive_mode
+        value: 'on'
+
+    - name: Set archive_command
+      become_user: postgres
+      postgresql_set:
+        name: archive_command
+        value: 'cp %p /oracle/pg_data/archive/%f'
+
+    - name: Set max_wal_senders
+      become_user: postgres
+      postgresql_set:
+        name: max_wal_senders
+        value: '10'
+    
+    - name: Set wal_level
+      become_user: postgres
+      postgresql_set:
+        name: wal_level
+        value: 'replica'
+    
+    - name: Set wal_log_hints
+      become_user: postgres
+      postgresql_set:
+        name: wal_log_hints
+        value: 'on'
+    
+    - name: Set log_directory
+      become_user: postgres
+      postgresql_set:
+        name: log_directory
+        value: '/var/log/postgresql/'
+    
+    - name: Set log_filename
+      become_user: postgres
+      postgresql_set:
+        name: log_filename
+        value: 'postgres.log'
+
+    - name: Set logging_collector=on
+      become_user: postgres
+      postgresql_set:
+        name: logging_collector
+        value: 'on'
+    
+    - name: Set log_replication_commands
+      become_user: postgres
+      postgresql_set:
+        name: log_replication_commands
+        value: 'on'
+
+    - name: Restart for applying
+      service:
+        name: postgresql
+        state: restarted
+
+    - name: Launch SQL script 
+      become_user: postgres
+      shell: psql -U {{ DB_USER }} -d {{ DB_DATABASE }} -f /tmp/00_init.sql
+
+- name: Postgresql replication DB install
+  hosts: db_repl_host
+  become: yes
+  tasks:
+    - name: Install packages
+      apt:
+        pkg:
+          - postgresql
+          - postgresql-contrib
+          - python3-psycopg2
+        state: latest
+
+    - name: Start postgresql service
+      service:
+        name: postgresql
+        state: started
+
+    - name: Delete data directory
+      ansible.builtin.file:
+        state: absent
+        path: /var/lib/postgresql/data
+
+    - name: Start replication 
+      become_user: postgres
+      environment:
+        PGUSER: "{{ DB_REPL_USER }}"
+        PGPASSWORD: "{{ DB_PASSWORD }}"
+      shell: pg_basebackup -R -h {{ DB_HOST }} -U {{ DB_REPL_USER }} -D /var/lib/postgresql/data
+
+- name: Bot launch
+  hosts: bot_host
+  become: yes
+  tasks:
+    - name: Install packages
+      apt:
+        pkg:
+          - python3
+          - python3-pip
+          - libpq-dev
+          - git
+
+    - name: Create app dir
+      file:
+        path: /app/
+        state: directory
+
+    - name: Git Clone
+      git:
+        repo: https://github.com/TonySD/telegram-bot
+        dest: /app/
+        clone: yes
+        version: main
+
+    - name: Python requirements install
+      pip:
+        requirements: /app/bot/requirements.txt
+
+    - name: Copy enviroment file
+      copy:
+        src: .env
+        dest: /app/bot/.env
+
+    - name: Start bot
+      shell: python3 /app/bot/bot.py
+
