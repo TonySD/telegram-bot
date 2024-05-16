@@ -7,8 +7,6 @@ while IFS='=' read -r key value || [ -n "$key" ]; do
     fi
 done < .env
 
-env_vars["DB_REPL_HOST"]="192.168.0.66"
-
 for key in "${!env_vars[@]}"; do
     echo "$key: ${env_vars[$key]}"
 done > env.yaml
