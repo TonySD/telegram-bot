@@ -8,10 +8,13 @@ services:
       - db_repl
     networks:
       - custom_network
+    env_file:
+      - .env
+    build: bot/
 
   db:
     healthcheck:
-      test: 'pg_isready -U postgres -d bot_db'
+      test: 'pg_isready -U postgres -d ${DB_DATABASE}'
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,10 +26,23 @@ services:
     image: db_image
     networks:
       - custom_network
+    env_file:
+      - .env
+    build: 
+      context: db/
+      dockerfile: Dockerfile
+      args:
+        - DB_USER=$DB_USER
+        - DB_PASSWORD=$DB_PASSWORD
+        - DB_HOST=$DB_HOST
+        - DB_DATABASE=$DB_DATABASE
+        - RM_USER=$RM_USER
+        - RM_PASSWORD=$RM_PASSWORD
+        - DB_REPL_USER=$DB_REPL_USER
 
   db_repl:
     healthcheck:
-      test: 'pg_isready -U postgres -d bot_db'
+      test: 'pg_isready -U postgres -d ${DB_DATABASE}'
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,6 +55,18 @@ services:
       - db
     networks:
       - custom_network
+    env_file:
+      - .env
+    build: 
+      context: db_repl/
+      dockerfile: Dockerfile
+      args:
+        - DB_REPL_USER=$DB_REPL_USER
+        - DB_REPL_PASSWORD=$DB_REPL_PASSWORD
+        - DB_HOST=$DB_HOST
+        - DB_REPL_USER=$DB_REPL_USER
+
+
 
 networks:
   custom_network:
