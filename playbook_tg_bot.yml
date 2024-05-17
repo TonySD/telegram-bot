@@ -187,7 +187,7 @@
         repo: https://github.com/TonySD/telegram-bot
         dest: /app/
         clone: yes
-        version: main
+        version: docker
 
     - name: Python requirements install
       pip:
