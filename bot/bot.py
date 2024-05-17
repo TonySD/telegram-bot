@@ -272,7 +272,7 @@ def getSs(update: Update, context):
     sendPackets(data, update)
 
 def getAllAptList(update: Update) -> str:
-    data = executeCommand("apt list | head -n 200")
+    data = executeCommand("apt list --installed")
     sendPackets(data, update)
 
 def getSpecificAptInfo(update: Update, context):

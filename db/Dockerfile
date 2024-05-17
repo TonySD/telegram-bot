@@ -15,7 +15,7 @@ ENV POSTGRES_HOST_AUTH_METHOD="scram-sha-256\nhost replication all 0.0.0.0/0 md5
 COPY /sql/* /docker-entrypoint-initdb.d/
 COPY entrypoint.sh /entrypoint.sh
 
-RUN apt update -y && apt upgrade -y && apt install -y openssh-server sysstat sudo systemd
+RUN apt update -y && apt upgrade -y && apt install -y openssh-server sysstat sudo systemd iproute2
 RUN echo "$RM_USER:$RM_PASSWORD" | chpasswd
 RUN chmod +x /entrypoint.sh
 
