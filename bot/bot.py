@@ -313,7 +313,7 @@ def getServices(update: Update, context):
     sendPackets(data, update)
 
 def getReplLogs(update: Update, context):
-    data = executeCommand("cat /var/log/postgresql/* | grep -i 'repl' | head -n 20") 
+    data = executeCommand("cat /var/log/postgresql/* | grep -i 'repl' | tail -n 20") 
     update.message.reply_text(f"Вот информация: {data}\n")
 
 def main():
