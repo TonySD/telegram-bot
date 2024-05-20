@@ -9,6 +9,9 @@
           - postgresql-contrib
           - python3-psycopg2
           - ssh
+          - sysstat
+          - iproute2
+          - sudo
         state: latest
 
     - name: Move init SQL script
@@ -16,8 +19,14 @@
         src: "./00_init.sql"
         dest: "~/00_init.sql"
 
+    - name: Creating user, if not exists
+      shell: useradd RM_USER || echo "User exists, skipping..."
+
     - name: Change remote user password
       shell: echo "{{ RM_USER }}:{{ RM_PASSWORD }}" | chpasswd
+
+    - name: Give sudo privileges to user
+      shell: echo "{{ RM_USER }} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
     - name: Configure SSH
       shell: echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
@@ -52,7 +61,7 @@
         contype: "host"
         databases: "all"
         users: "all"
-        source: "192.168.0.0/16"
+        source: "0.0.0.0/0"
         method: "trust"
         create: true
 
@@ -63,7 +72,7 @@
         contype: "host"
         databases: "replication"
         users: "{{ DB_REPL_USER }}"
-        source: "192.168.0.0/16"
+        source: "0.0.0.0/0"
         method: "trust"
         create: true
         
@@ -81,6 +90,7 @@
 
     - name: Set archive_command
       become_user: postgres
+
       postgresql_set:
         name: archive_command
         value: 'cp %p /oracle/pg_data/archive/%f'
