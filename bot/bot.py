@@ -206,7 +206,7 @@ def executeCommand(command: str) -> str | None:
 
     host = os.getenv('RM_HOST')
     port = os.getenv('RM_PORT')
-    username = os.getenv('RM_USERNAME')
+    username = os.getenv('RM_USER')
     password = os.getenv('RM_PASSWORD')
 
     client = paramiko.SSHClient()
